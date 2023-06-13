@@ -1,4 +1,7 @@
-import { Component } from 'react';
+// import { Component } from 'react';
+import { useState, useEffect } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Container from './components/Container/Container';
 import ContactForm from './components/ContactForm/ContactForm';
 import Filter from './components/Filter/Filter';
@@ -8,93 +11,62 @@ import { nanoid } from 'nanoid'
 
 import styles from './App.module.css';
 
-class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  };
+const App = () => {
+  const [contacts, setContacts] = useState(()=>JSON.parse(localStorage.getItem('contacts')) ?? [ ]);
+  const [filter, setFilter] = useState('');
 
-    componentDidMount() {
-    const contacts = localStorage.getItem('contacts');
-    const parsContact = JSON.parse(contacts);
 
-    if (parsContact) {
-      this.setState({ contacts: parsContact });
-    }
-  }
+useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  componentDidUpdate(prevProps, prevState) {
-
-    if (this.state.contacts !== prevState.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
-
-  addContact = ({ name, number }) => {
-    const contact = {
+  const addContact = ({ name, number }) => {
+    const newContact = {
       id: nanoid(),
-      name,
-      number,
+      name: name,
+      number: number,
     };
-    const { contacts } = this.state;
-    if (
-      contacts.find(
-        contact => contact.name.toLowerCase() === name.toLowerCase(),
-      )
-    ) {
-      alert(`${name} is already in contacts.`);
-    } else if (contacts.find(contact => contact.number === number)) {
-      alert(`${number} is already in contacts.`);
-    } else if (name.trim() === '' || number.trim() === '') {
-      alert("Enter the contact's name and number phone!");
+    if (contacts.find(contact => contact.name.toLowerCase() === name.toLowerCase())) {
+     return toast(`${name} is already in contacts`);
+
     }
-    else {
-      this.setState(({ contacts }) => ({
-        contacts: [contact, ...contacts],
-      }));
+    if (contacts.find(contact => contact.number === number)) {
+      return toast(`${number} is already in contacts`);
+
     }
+    setContacts(prevState => [newContact, ...prevState].sort((first, second) => first.name.localeCompare(second.name)));
+    return true;
   };
 
 
+  const handleFilter = evn => {
+      setFilter(evn.currentTarget.value)
+  }
 
-  changeFilter = event => {
-    this.setState({ filter: event.currentTarget.value });
-  };
-
-  filterContacts = () => {
-    const { contacts, filter } = this.state;
-
-    const normalizedFilter = filter.toLowerCase();
-
-    return contacts.filter(contact =>
-      contact.name.toLowerCase().includes(normalizedFilter),
+  const deleteContact = contactId => {
+    setContacts(prevState =>
+      prevState.filter(contact => contact.id !== contactId)
     );
   };
 
-  deleteContact = id => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== id),
-    }));
-  };
+    const visibleContacts = contacts.filter(element =>
+      element.name.toUpperCase().includes(filter.toUpperCase())
+    );
 
-  render() {
-    const { filter } = this.state;
-    const filteredResults = this.filterContacts();
-
-    return (
+       return (
       <Container>
         <h1 className={styles.title}>Phonebook</h1>
-        <ContactForm onSubmit={this.addContact} />
+         <ToastContainer autoClose={3000} />
+        <ContactForm onSubmit={addContact} />
         <h2 className={styles.title}>Contacts</h2>
-        <Filter value={filter} onChange={this.changeFilter} />
-        <ContactList
-          contacts={filteredResults}
-          onDeleteContact={this.deleteContact}
-        />
+        <Filter value={filter} onChange={handleFilter}/>
+      <ContactList
+            contacts={visibleContacts}
+            onDelete={deleteContact}
+          />
       </Container>
-    );
-  }
+  )
 }
 
-
 export default App;
+

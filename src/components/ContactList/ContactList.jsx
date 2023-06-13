@@ -1,22 +1,22 @@
-
 import PropTypes from 'prop-types';
-import ContactItem from '../ContactItem/ContactItem.jsx';
-
 import styles from './ContactList.module.css';
 
-const ContactList = ({ contacts, onDeleteContact }) => {
-  return (
-    <ul className={styles.list}>
-      {contacts.map(contact => (
-        <ContactItem
-          contact={contact}
-          onDeleteContact={onDeleteContact}
-          key={contact.id}
-        />
+function ContactList({ contacts, onDelete }) {
+     return (
+    <ul className={styles.list} >
+      {contacts.map(({ id, name, number }) => (
+        <li className={styles.item} key={id}>
+          <p >
+            {name}: {number}
+          </p>
+          <button className={styles.button_item} type="button" onClick={() => onDelete(id)}>
+                Delete
+              </button>
+        </li>
       ))}
     </ul>
   );
-};
+}
 
 ContactList.propTypes = {
   contacts: PropTypes.arrayOf(
@@ -26,7 +26,8 @@ ContactList.propTypes = {
       number: PropTypes.string.isRequired,
     }),
   ),
-  onDeleteContact: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
 };
 
 export default ContactList;
+
